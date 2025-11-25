@@ -6,12 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Interfaces\Repositories\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\OnlineCasino.SharedLibrary\OnlineCasino.SharedLibrary.csproj" />
-  </ItemGroup>
-
 </Project>

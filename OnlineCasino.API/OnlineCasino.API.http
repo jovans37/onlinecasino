@@ -1,6 +1,0 @@
-@OnlineCasino.API_HostAddress = http://localhost:5093
-
-GET {{OnlineCasino.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
