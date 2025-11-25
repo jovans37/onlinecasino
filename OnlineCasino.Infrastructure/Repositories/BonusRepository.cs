@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OnlineCasino.Application.DTOs;
+using OnlineCasino.Application.Extensions;
 using OnlineCasino.Application.Interfaces;
 using OnlineCasino.Domain.Entities;
+using OnlineCasino.Domain.Enums;
 using OnlineCasino.Infrastructure.Data;
 
 namespace OnlineCasino.Infrastructure.Repositories
@@ -25,6 +27,8 @@ namespace OnlineCasino.Infrastructure.Repositories
                 {
                     Id = b.Id,
                     PlayerId = b.PlayerId,
+                    BonusTypeId = b.Type,
+                    BonusType = EnumHelper.GetDisplayName(b.Type),
                     Amount = b.Amount,
                     IsActive = b.IsActive,
                     CreatedAt = b.CreatedAt,
@@ -41,7 +45,7 @@ namespace OnlineCasino.Infrastructure.Repositories
             };
         }
 
-        public async Task<Bonus?> GetActiveBonusByPlayerAndTypeAsync(int playerId, string bonusType)
+        public async Task<Bonus?> GetActiveBonusByPlayerAndTypeAsync(int playerId, BonusType bonusType)
         {
             return await _context.Bonuses
                 .FirstOrDefaultAsync(b =>

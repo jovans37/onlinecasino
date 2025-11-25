@@ -1,4 +1,5 @@
-﻿using OnlineCasino.Domain.Entities;
+﻿using OnlineCasino.Application.DTOs;
+using OnlineCasino.Domain.Entities;
 using OnlineCasino.Infrastructure.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -10,5 +11,6 @@ namespace OnlineCasino.Application.Interfaces
 {
     public interface IBonusAuditLogRepository : IRepository<BonusAuditLog>
     {
+        Task<PagedResponse<BonusAuditLogDto>> GetAllAsync(int pageNumber, int pageSize);
     }
 }

@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace OnlineCasino.Application.DTOs
 {
-    public class UpdateBonusRequest
+    public class EnumTypeDto
     {
-        public int Amount { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime? ExpiresAt { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using OnlineCasino.Application.DTOs;
+using OnlineCasino.Application.Extensions;
 using OnlineCasino.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,9 @@ namespace OnlineCasino.Application.Mapping
         public MappingProfile()
         {
             // Domain to DTO
-            CreateMap<Bonus, BonusDto>();
+            CreateMap<Bonus, BonusDto>()
+                .ForMember(dest => dest.BonusType, opt => opt.MapFrom(src => src.Type.GetDisplayName()))
+                .ForMember(dest => dest.BonusTypeId, opt => opt.MapFrom(src => src.Type));
 
             CreateMap<CreateBonusRequest, Bonus>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())

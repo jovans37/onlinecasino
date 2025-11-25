@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using OnlineCasino.Application.DependencyInjection;
+using OnlineCasino.Domain.Enums;
 using OnlineCasino.Infrastructure.DependencyInjection;
 using System.Text;
 
@@ -15,6 +17,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Online Casino Bonuses API", Version = "v1" });
+
+    // Configure all enums to show as strings
+    c.UseAllOfToExtendReferenceSchemas();
+    c.UseOneOfForPolymorphism();
 
     // Add JWT Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

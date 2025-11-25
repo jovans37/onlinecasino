@@ -20,7 +20,7 @@ namespace OnlineCasino.Infrastructure.DependencyInjection
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(configuration.GetConnectionString("DbConnectionString")));
+                options.UseSqlServer(configuration.GetConnectionString("DbConnectionString")));
 
             services.AddScoped<IBonusRepository, BonusRepository>();
             services.AddScoped<IBonusAuditLogRepository, BonusAuditLogRepository>();

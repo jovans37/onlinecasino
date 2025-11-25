@@ -23,8 +23,9 @@ namespace OnlineCasino.Infrastructure.Data
                 entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Type)
-                    .HasMaxLength(100)
-                    .IsRequired();
+                    .IsRequired()
+                    .HasConversion<string>()  //used to store the value as string in db ex: "Welcome", "Deposit"
+                    .HasMaxLength(20);
 
                 entity.Property(e => e.Amount)
                     .HasColumnType("decimal(18,2)");
@@ -58,10 +59,10 @@ namespace OnlineCasino.Infrastructure.Data
                     .HasMaxLength(100)
                     .IsRequired();
 
-                //entity.HasOne(e => e.Bonus)
-                //    .WithMany()
-                //    .HasForeignKey(e => e.BonusId)
-                //    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Bonus)
+                    .WithMany()
+                    .HasForeignKey(e => e.BonusId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

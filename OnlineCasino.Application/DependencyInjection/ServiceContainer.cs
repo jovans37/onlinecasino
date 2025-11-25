@@ -23,6 +23,7 @@ namespace OnlineCasino.Application.DependencyInjection
             }, Assembly.GetExecutingAssembly());
 
             services.AddScoped<IBonusService, BonusService>();
+            services.AddScoped<IBonusAuditLogService, BonusAuditLogService>();
             services.AddScoped<IAuthService, AuthService>();
 
             return services;

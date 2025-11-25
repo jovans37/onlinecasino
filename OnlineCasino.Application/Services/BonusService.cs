@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using OnlineCasino.Application.DTOs;
+using OnlineCasino.Application.Extensions;
 using OnlineCasino.Application.Interfaces;
 using OnlineCasino.Domain.Entities;
 using System;
@@ -67,6 +68,13 @@ namespace OnlineCasino.Application.Services
                 if (existingBonus != null)
                 {
                     response.Message = $"Player already has an active bonus with type: {request.Type}";
+                    return response;
+                }
+
+                //check for typeid if exists in enum
+                if (!EnumHelper.IsValidBonusType(request.Type))
+                {
+                    response.Message = $"Invalid bonus type: {request.Type}";
                     return response;
                 }
 

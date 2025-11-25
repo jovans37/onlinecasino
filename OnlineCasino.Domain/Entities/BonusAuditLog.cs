@@ -11,6 +11,7 @@ namespace OnlineCasino.Domain.Entities
     public class BonusAuditLog : BaseEntity
     {
         public int BonusId { get; private set; }
+        public Bonus Bonus { get; private set; }
         public string Action { get; private set; }
         public string Operator { get; private set; }
         public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
