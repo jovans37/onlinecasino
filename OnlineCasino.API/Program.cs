@@ -1,12 +1,6 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
 using OnlineCasino.API.Extensions;
 using OnlineCasino.Application.DependencyInjection;
-using OnlineCasino.Domain.Enums;
 using OnlineCasino.Infrastructure.DependencyInjection;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -30,9 +24,10 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+//for demo purposes, on run of the application the migrations will be applied
+//on production migration should be runned in the release pipeline
 app.ApplyMigrations();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
