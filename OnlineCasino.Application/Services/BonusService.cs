@@ -4,6 +4,7 @@ using OnlineCasino.Application.DTOs;
 using OnlineCasino.Application.Extensions;
 using OnlineCasino.Application.Interfaces;
 using OnlineCasino.Domain.Entities;
+using OnlineCasino.SharedLibrary.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,19 +20,22 @@ namespace OnlineCasino.Application.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IMapper _mapper;
         private readonly ILogger<BonusService> _logger;
+        private readonly IUnitOfWork _unitOfWork;
 
         public BonusService(
             IBonusRepository bonusRepository,
             IBonusAuditLogRepository auditLogRepository,
             ICurrentUserService currentUserService,
             IMapper mapper,
-            ILogger<BonusService> logger)
+            ILogger<BonusService> logger,
+            IUnitOfWork unitOfWork)
         {
             _bonusRepository = bonusRepository;
             _auditLogRepository = auditLogRepository;
             _currentUserService = currentUserService;
             _mapper = mapper;
             _logger = logger;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PagedResponse<BonusDto>> GetAllBonusesAsync(int pageNumber, int pageSize)
@@ -81,12 +85,14 @@ namespace OnlineCasino.Application.Services
                 var bonus = new Bonus(request.PlayerId, request.Type, request.Amount, operatorName, request.ExpiresAt);
 
                 await _bonusRepository.AddAsync(bonus);
-                await _bonusRepository.SaveChangesAsync();
+                //await _bonusRepository.SaveChangesAsync();
 
                 //log to audit
                 await _auditLogRepository.AddAsync(
                     new BonusAuditLog(bonus.Id, "CREATE", operatorName, null, $"Created bonus: {request.Type} for player {request.PlayerId}"));
-                await _auditLogRepository.SaveChangesAsync();
+                //await _auditLogRepository.SaveChangesAsync();
+
+                await _unitOfWork.SaveChangesAsync();
 
                 var bonusDto = _mapper.Map<BonusDto>(bonus);
                 return new Response<BonusDto>(bonusDto);
@@ -120,7 +126,7 @@ namespace OnlineCasino.Application.Services
 
                 _bonusRepository.Update(bonus);
                 await _bonusRepository.SaveChangesAsync();
-
+                //needs to save two times, because in the audit log we need the bonusid of the new created bonus
                 // Log audit
                 var newValues = $"Amount: {request.Amount}, Active: {request.IsActive}";
                 await _auditLogRepository.AddAsync(
@@ -156,13 +162,13 @@ namespace OnlineCasino.Application.Services
                 bonus.Deactivate(operatorName);
 
                 _bonusRepository.Update(bonus);
-                await _bonusRepository.SaveChangesAsync();
 
                 // Log audit
                 await _auditLogRepository.AddAsync(new BonusAuditLog(
                     bonus.Id, "DELETE", operatorName,
                     $"Bonus: {bonus.Type} for player {bonus.PlayerId}", null));
-                await _auditLogRepository.SaveChangesAsync();
+
+                await _unitOfWork.SaveChangesAsync();
 
                 return new Response<BonusDto>(true, "Bonus deleted");
             }

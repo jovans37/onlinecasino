@@ -7,6 +7,7 @@ using OnlineCasino.Application.Interfaces;
 using OnlineCasino.Infrastructure.Data;
 using OnlineCasino.Infrastructure.Repositories;
 using OnlineCasino.Infrastructure.Services;
+using OnlineCasino.SharedLibrary.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,7 @@ namespace OnlineCasino.Infrastructure.DependencyInjection
             services.AddScoped<IBonusRepository, BonusRepository>();
             services.AddScoped<IBonusAuditLogRepository, BonusAuditLogRepository>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.Configure<JwtSettings>(options =>
             {

@@ -25,7 +25,7 @@ namespace OnlineCasino.Infrastructure.Repositories
                 .Take(pageSize)
                 .Select(b => new BonusAuditLogDto
                 {
-                    BonusId = b.Id,
+                    BonusId = b.BonusId,
                     Action = b.Action,
                     Operator = b.Operator,
                     OldValues = b.OldValues,
