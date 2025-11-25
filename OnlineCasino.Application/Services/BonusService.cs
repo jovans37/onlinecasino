@@ -85,14 +85,13 @@ namespace OnlineCasino.Application.Services
                 var bonus = new Bonus(request.PlayerId, request.Type, request.Amount, operatorName, request.ExpiresAt);
 
                 await _bonusRepository.AddAsync(bonus);
-                //await _bonusRepository.SaveChangesAsync();
+                await _bonusRepository.SaveChangesAsync();
+                //needs to save two times, because in the audit log we need the bonusid of the new created bonus
 
                 //log to audit
                 await _auditLogRepository.AddAsync(
                     new BonusAuditLog(bonus.Id, "CREATE", operatorName, null, $"Created bonus: {request.Type} for player {request.PlayerId}"));
-                //await _auditLogRepository.SaveChangesAsync();
-
-                await _unitOfWork.SaveChangesAsync();
+                await _auditLogRepository.SaveChangesAsync();
 
                 var bonusDto = _mapper.Map<BonusDto>(bonus);
                 return new Response<BonusDto>(bonusDto);
@@ -125,13 +124,12 @@ namespace OnlineCasino.Application.Services
                 bonus.Update(request.Amount, request.IsActive, operatorName);
 
                 _bonusRepository.Update(bonus);
-                await _bonusRepository.SaveChangesAsync();
-                //needs to save two times, because in the audit log we need the bonusid of the new created bonus
                 // Log audit
                 var newValues = $"Amount: {request.Amount}, Active: {request.IsActive}";
                 await _auditLogRepository.AddAsync(
                     new BonusAuditLog(bonus.Id, "UPDATE", operatorName, oldValues, newValues));
-                await _auditLogRepository.SaveChangesAsync();
+
+                await _unitOfWork.SaveChangesAsync();
 
                 var bonusDto = _mapper.Map<BonusDto>(bonus);
                 return new Response<BonusDto>(bonusDto);

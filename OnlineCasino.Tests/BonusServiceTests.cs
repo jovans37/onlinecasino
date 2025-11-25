@@ -6,6 +6,10 @@ using OnlineCasino.Application.Interfaces;
 using OnlineCasino.Application.Services;
 using OnlineCasino.Domain.Entities;
 using OnlineCasino.Domain.Enums;
+using OnlineCasino.SharedLibrary.Interfaces;
+using System;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace OnlineCasino.Tests
 {
@@ -16,6 +20,7 @@ namespace OnlineCasino.Tests
         private readonly Mock<ICurrentUserService> _mockCurrentUserService;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<ILogger<BonusService>> _mockLogger;
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly BonusService _bonusService;
 
         public BonusServiceTests()
@@ -25,13 +30,15 @@ namespace OnlineCasino.Tests
             _mockCurrentUserService = new Mock<ICurrentUserService>();
             _mockMapper = new Mock<IMapper>();
             _mockLogger = new Mock<ILogger<BonusService>>();
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
 
             _bonusService = new BonusService(
                 _mockBonusRepository.Object,
                 _mockAuditLogRepository.Object,
                 _mockCurrentUserService.Object,
                 _mockMapper.Object,
-                _mockLogger.Object);
+                _mockLogger.Object,
+                _mockUnitOfWork.Object);
         }
 
         [Fact]
@@ -122,7 +129,10 @@ namespace OnlineCasino.Tests
             };
 
             var operatorName = "operator1";
-            var existingBonus = new Bonus(1, BonusType.Welcome, 20, operatorName, DateTime.UtcNow.AddDays(1));
+            var existingBonus = new Bonus(1, BonusType.Welcome, 10, operatorName, DateTime.UtcNow.AddDays(1))
+            {
+                Id = bonusId
+            };
 
             var updatedBonusDto = new BonusDto
             {
@@ -137,6 +147,10 @@ namespace OnlineCasino.Tests
                 .Returns(operatorName);
             _mockBonusRepository.Setup(x => x.GetByIdAsync(bonusId))
                 .ReturnsAsync(existingBonus);
+            _mockAuditLogRepository.Setup(x => x.AddAsync(It.IsAny<BonusAuditLog>()))
+                .Returns(Task.CompletedTask);
+            _mockUnitOfWork.Setup(x => x.SaveChangesAsync())
+                .ReturnsAsync(1);
             _mockMapper.Setup(x => x.Map<BonusDto>(It.IsAny<Bonus>()))
                 .Returns(updatedBonusDto);
 
@@ -150,9 +164,39 @@ namespace OnlineCasino.Tests
             Assert.Equal(updateRequest.IsActive, result.Data.IsActive);
 
             _mockBonusRepository.Verify(x => x.Update(It.IsAny<Bonus>()), Times.Once);
-            _mockBonusRepository.Verify(x => x.SaveChangesAsync(), Times.Once);
             _mockAuditLogRepository.Verify(x => x.AddAsync(It.IsAny<BonusAuditLog>()), Times.Once);
-            _mockAuditLogRepository.Verify(x => x.SaveChangesAsync(), Times.Once);
+            _mockUnitOfWork.Verify(x => x.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateBonusAsync_BonusNotFound_ReturnsErrorMessage()
+        {
+            // Arrange
+            var bonusId = 1;
+            var updateRequest = new UpdateBonusRequest
+            {
+                Amount = 20,
+                IsActive = false
+            };
+
+            var operatorName = "operator1";
+
+            _mockCurrentUserService.Setup(x => x.GetUserName())
+                .Returns(operatorName);
+            _mockBonusRepository.Setup(x => x.GetByIdAsync(bonusId))
+                .ReturnsAsync((Bonus)null);
+
+            // Act
+            var result = await _bonusService.UpdateBonusAsync(bonusId, updateRequest);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("Bonus not found", result.Message);
+            Assert.Null(result.Data);
+
+            _mockBonusRepository.Verify(x => x.Update(It.IsAny<Bonus>()), Times.Never);
+            _mockAuditLogRepository.Verify(x => x.AddAsync(It.IsAny<BonusAuditLog>()), Times.Never);
+            _mockUnitOfWork.Verify(x => x.SaveChangesAsync(), Times.Never);
         }
 
         [Fact]
@@ -170,6 +214,8 @@ namespace OnlineCasino.Tests
                 .Returns(operatorName);
             _mockBonusRepository.Setup(x => x.GetByIdAsync(bonusId))
                 .ReturnsAsync(existingBonus);
+            _mockUnitOfWork.Setup(x => x.SaveChangesAsync())
+                .ReturnsAsync(1);
 
             // Act
             var result = await _bonusService.DeleteBonusAsync(bonusId);
@@ -177,20 +223,17 @@ namespace OnlineCasino.Tests
             // Assert
             Assert.True(result.Success);
             Assert.Equal("Bonus deleted", result.Message);
-            Assert.Null(result.Data); 
+            Assert.Null(result.Data);
 
-            // verify the bonus was deactivated
+            // Verify the bonus was updated and UnitOfWork was used
             _mockBonusRepository.Verify(x => x.Update(It.Is<Bonus>(b => b.Id == bonusId)), Times.Once);
-            _mockBonusRepository.Verify(x => x.SaveChangesAsync(), Times.Once);
-
-            // verify audit log was created
             _mockAuditLogRepository.Verify(x => x.AddAsync(It.Is<BonusAuditLog>(log =>
                 log.BonusId == bonusId &&
                 log.Action == "DELETE" &&
                 log.Operator == operatorName &&
                 log.OldValues.Contains($"Bonus: {existingBonus.Type} for player {existingBonus.PlayerId}")
             )), Times.Once);
-            _mockAuditLogRepository.Verify(x => x.SaveChangesAsync(), Times.Once);
+            _mockUnitOfWork.Verify(x => x.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]
@@ -213,11 +256,10 @@ namespace OnlineCasino.Tests
             Assert.Equal("Bonus not found", result.Message);
             Assert.Null(result.Data);
 
-            // verify no operations were performed if the bonus is not found
+            // Verify no operations were performed
             _mockBonusRepository.Verify(x => x.Update(It.IsAny<Bonus>()), Times.Never);
-            _mockBonusRepository.Verify(x => x.SaveChangesAsync(), Times.Never);
             _mockAuditLogRepository.Verify(x => x.AddAsync(It.IsAny<BonusAuditLog>()), Times.Never);
-            _mockAuditLogRepository.Verify(x => x.SaveChangesAsync(), Times.Never);
+            _mockUnitOfWork.Verify(x => x.SaveChangesAsync(), Times.Never);
         }
     }
 }
