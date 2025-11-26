@@ -21,7 +21,17 @@ namespace OnlineCasino.Infrastructure.DependencyInjection
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DbConnectionString")));
+                options.UseSqlServer(
+                    configuration.GetConnectionString("DbConnectionString"),
+                    sqlServerOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 10,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null
+                        );
+                    }
+                ));
 
             services.AddScoped<IBonusRepository, BonusRepository>();
             services.AddScoped<IBonusAuditLogRepository, BonusAuditLogRepository>();
